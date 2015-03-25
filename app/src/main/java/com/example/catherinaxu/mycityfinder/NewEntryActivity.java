@@ -13,6 +13,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,18 +21,22 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 
 public class NewEntryActivity extends Activity {
 
-private static final int NUM_RESULTS = 1;
+private static final int NUM_RESULTS = 10;
 private static final String INPUT = "input";
 private static final int GET_DESTINATION = 10;
 private static final int GET_DESCRIPTION = 11;
+private static final int NUM_MATCHES_TO_DISPLAY = 10;
+private static List<String> posAddresses;
 private static Address address;
 private static String description;
+ListViewAdapter mAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +57,29 @@ private static String description;
         status.setTypeface(font);
     }
 
+    public void putAddressInList(List<Address> matches) {
+        posAddresses = new ArrayList<>();
+        if (matches.size() >= NUM_MATCHES_TO_DISPLAY) {
+            for (int i = 0; i < 10; i++) {
+                Address addr = matches.get(i);
+                if (addr.getLocality() != null && addr.getCountryName() != null) {
+                    posAddresses.add(addr.getFeatureName() + ", " + addr.getLocality() + ", " + addr.getCountryName());
+                } else {
+                    posAddresses.add(addr.getFeatureName());
+                }
+            }
+        } else {
+            for (int i = 0; i < matches.size(); i++) {
+                Address addr = matches.get(i);
+                if (addr.getLocality() != null && addr.getCountryName() != null) {
+                    posAddresses.add(addr.getFeatureName() + ", " + addr.getLocality() + ", " + addr.getCountryName());
+                } else {
+                    posAddresses.add(addr.getFeatureName());
+                }
+            }
+        }
+    }
+
     public void searchLocation(View view) {
         EditText edittext = (EditText) findViewById(R.id.destination);
         String text = edittext.getText().toString();
@@ -68,9 +96,13 @@ private static String description;
                     Toast.makeText(this, "Destination not found. Please try again.", Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(this, "Destination found! Please write a short description.", Toast.LENGTH_SHORT).show();
-                    address = matches.get(0);
-                    Intent intent = new Intent(this, NewEntryDescriptionActivity.class);
-                    startActivityForResult(intent, GET_DESCRIPTION);
+                    putAddressInList(matches);
+                    mAdapter = new ListViewAdapter(this, posAddresses);
+
+                    ListView listview = (ListView) findViewById(R.id.list);
+                    listview.setAdapter(mAdapter);
+                    //Intent intent = new Intent(this, NewEntryDescriptionActivity.class);
+                    //startActivityForResult(intent, GET_DESCRIPTION);
                 }
             } catch (IOException exception) {
                 Toast.makeText(this, "No network connection. Please check and try again.", Toast.LENGTH_SHORT).show();
@@ -86,8 +118,6 @@ private static String description;
             description = intent.getStringExtra("description");
 
             Intent newIntent = new Intent();
-            Log.d(INPUT, "The user latitude is " + address.getLatitude());
-            Log.d(INPUT, "The user longitude is " + address.getLongitude());
             newIntent.putExtra("latitude", address.getLatitude());
             newIntent.putExtra("longitude", address.getLongitude());
             newIntent.putExtra("name", address.getFeatureName());
