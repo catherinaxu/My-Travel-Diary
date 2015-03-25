@@ -3,6 +3,7 @@ package com.example.catherinaxu.mycityfinder;
 
 import android.app.*;
 import android.content.*;
+import android.graphics.Typeface;
 import android.location.*;
 import android.os.*;
 import android.view.View;
@@ -24,6 +25,17 @@ public class CityFinderActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_city_finder);
 
+        //change font of title
+        TextView title = (TextView) findViewById(R.id.title);
+        Typeface font_bold = Typeface.createFromAsset(getAssets(), "ostrich-black.ttf");
+        title.setTypeface(font_bold);
+
+        //change font of button
+        Typeface font = Typeface.createFromAsset(getAssets(), "ostrich-regular.ttf");
+        Button button = (Button) findViewById(R.id.button);
+        button.setTypeface(font);
+
+        getActionBar().hide();
         MapFragment mf = (MapFragment) getFragmentManager().findFragmentById(R.id.the_map);
         mf.getMapAsync(this);                  // calls onMapReady when loaded
     }

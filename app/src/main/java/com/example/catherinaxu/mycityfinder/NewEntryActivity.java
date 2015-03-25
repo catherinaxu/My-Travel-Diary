@@ -3,6 +3,7 @@ package com.example.catherinaxu.mycityfinder;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
@@ -10,9 +11,13 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,39 +29,34 @@ public class NewEntryActivity extends Activity {
 private static final int NUM_RESULTS = 1;
 private static final String INPUT = "input";
 private static final int GET_DESTINATION = 10;
+private static final int GET_DESCRIPTION = 11;
 private static Address address;
+private static String description;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_entry);
+        getActionBar().hide();
+
+        //sets font of title
+        TextView title = (TextView) findViewById(R.id.title);
+        Typeface font = Typeface.createFromAsset(getAssets(), "ostrich-regular.ttf");
+        title.setTypeface(font);
+
+        //sets font of buttons
+        Button button1 = (Button) findViewById(R.id.find);
+        button1.setTypeface(font);
+
+        TextView status = (TextView) findViewById(R.id.currentColorLabel);
+        status.setTypeface(font);
     }
 
-    private void passMarkerFields(String text) {
-        Intent intent = new Intent();
-        intent.putExtra("latitude", address.getLatitude());
-        intent.putExtra("longitude", address.getLongitude());
-        intent.putExtra("name", address.getFeatureName());
-        intent.putExtra("info", text);
-        setResult(GET_DESTINATION, intent);
-        finish();
-    }
-
-    public void setDescription(View view) {
-        EditText edittext = (EditText) findViewById(R.id.info);
-        String text = edittext.getText().toString();
-        if (text.equals("")) {
-            Toast.makeText(this, "Please enter your description", Toast.LENGTH_SHORT).show();
-        } else {
-            passMarkerFields(text);
-        }
-    }
     public void searchLocation(View view) {
         EditText edittext = (EditText) findViewById(R.id.destination);
         String text = edittext.getText().toString();
-        Log.d(INPUT, "The user input is " + text);
         if (text.equals("")) {
-            Toast.makeText(this, "Please enter the destination", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please enter the destination.", Toast.LENGTH_SHORT).show();
         } else {
             Geocoder geocoder = new Geocoder(this, Locale.US);
             if (!geocoder.isPresent()) { //what is this error?
@@ -67,14 +67,33 @@ private static Address address;
                 if (matches.size() == 0) {
                     Toast.makeText(this, "Destination not found. Please try again.", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(this, "Destination found! Added to map.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Destination found! Please write a short description.", Toast.LENGTH_SHORT).show();
                     address = matches.get(0);
-                    //passMarkerToMap(matches.get(0));
+                    Intent intent = new Intent(this, NewEntryDescriptionActivity.class);
+                    startActivityForResult(intent, GET_DESCRIPTION);
                 }
             } catch (IOException exception) {
                 Toast.makeText(this, "No network connection. Please check and try again.", Toast.LENGTH_SHORT).show();
             }
 
+        }
+    }
+
+    /* Passes relevant fields back to map so it can be added */
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+        if (requestCode == GET_DESCRIPTION) {
+            description = intent.getStringExtra("description");
+
+            Intent newIntent = new Intent();
+            Log.d(INPUT, "The user latitude is " + address.getLatitude());
+            Log.d(INPUT, "The user longitude is " + address.getLongitude());
+            newIntent.putExtra("latitude", address.getLatitude());
+            newIntent.putExtra("longitude", address.getLongitude());
+            newIntent.putExtra("name", address.getFeatureName());
+            newIntent.putExtra("info", description);
+            setResult(GET_DESTINATION, newIntent);
+            finish();
         }
     }
 
