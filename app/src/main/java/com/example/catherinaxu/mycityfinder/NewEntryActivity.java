@@ -11,7 +11,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -34,6 +36,7 @@ private static final int GET_DESTINATION = 10;
 private static final int GET_DESCRIPTION = 11;
 private static final int NUM_MATCHES_TO_DISPLAY = 10;
 private static List<String> posAddresses;
+private static List<Address> matches;
 private static Address address;
 private static String description;
 ListViewAdapter mAdapter;
@@ -46,15 +49,16 @@ ListViewAdapter mAdapter;
 
         //sets font of title
         TextView title = (TextView) findViewById(R.id.title);
-        Typeface font = Typeface.createFromAsset(getAssets(), "ostrich-regular.ttf");
-        title.setTypeface(font);
+        Typeface font_bold = Typeface.createFromAsset(getAssets(), "ostrich-black.ttf");
+        title.setTypeface(font_bold);
 
         //sets font of buttons
+        Typeface font_reg = Typeface.createFromAsset(getAssets(), "ostrich-regular.ttf");
         Button button1 = (Button) findViewById(R.id.find);
-        button1.setTypeface(font);
+        button1.setTypeface(font_reg);
 
         TextView status = (TextView) findViewById(R.id.currentColorLabel);
-        status.setTypeface(font);
+        status.setTypeface(font_reg);
     }
 
     public void putAddressInList(List<Address> matches) {
@@ -62,8 +66,8 @@ ListViewAdapter mAdapter;
         if (matches.size() >= NUM_MATCHES_TO_DISPLAY) {
             for (int i = 0; i < 10; i++) {
                 Address addr = matches.get(i);
-                if (addr.getLocality() != null && addr.getCountryName() != null) {
-                    posAddresses.add(addr.getFeatureName() + ", " + addr.getLocality() + ", " + addr.getCountryName());
+                if (addr.getAdminArea() != null && addr.getCountryName() != null) {
+                    posAddresses.add(addr.getFeatureName() + ", " + addr.getAdminArea() + ", " + addr.getCountryName());
                 } else {
                     posAddresses.add(addr.getFeatureName());
                 }
@@ -71,8 +75,8 @@ ListViewAdapter mAdapter;
         } else {
             for (int i = 0; i < matches.size(); i++) {
                 Address addr = matches.get(i);
-                if (addr.getLocality() != null && addr.getCountryName() != null) {
-                    posAddresses.add(addr.getFeatureName() + ", " + addr.getLocality() + ", " + addr.getCountryName());
+                if (addr.getAdminArea() != null && addr.getCountryName() != null) {
+                    posAddresses.add(addr.getFeatureName() + ", " + addr.getAdminArea() + ", " + addr.getCountryName());
                 } else {
                     posAddresses.add(addr.getFeatureName());
                 }
@@ -83,27 +87,56 @@ ListViewAdapter mAdapter;
     public void searchLocation(View view) {
         EditText edittext = (EditText) findViewById(R.id.destination);
         String text = edittext.getText().toString();
+
+        //case to handle empty string input
         if (text.equals("")) {
             Toast.makeText(this, "Please enter the destination.", Toast.LENGTH_SHORT).show();
+
+        //initiate geocoder
         } else {
             Geocoder geocoder = new Geocoder(this, Locale.US);
             if (!geocoder.isPresent()) { //what is this error?
                 Toast.makeText(this, "Please install Google Maps to continue", Toast.LENGTH_SHORT).show();
             }
             try {
-                List<Address> matches = geocoder.getFromLocationName(text, NUM_RESULTS);
+                matches = geocoder.getFromLocationName(text, NUM_RESULTS);
+
+                //if there are no matching results
                 if (matches.size() == 0) {
                     Toast.makeText(this, "Destination not found. Please try again.", Toast.LENGTH_SHORT).show();
+
+                //if there are a number of matches
                 } else {
                     Toast.makeText(this, "Destination found! Please write a short description.", Toast.LENGTH_SHORT).show();
                     putAddressInList(matches);
-                    mAdapter = new ListViewAdapter(this, posAddresses);
+                    mAdapter = new ListViewAdapter(this, posAddresses, "ostrich-regular.ttf");
 
                     ListView listview = (ListView) findViewById(R.id.list);
                     listview.setAdapter(mAdapter);
-                    //Intent intent = new Intent(this, NewEntryDescriptionActivity.class);
-                    //startActivityForResult(intent, GET_DESCRIPTION);
+
+                    //code to handle clicks
+                    listview.setOnItemClickListener(
+                            new AdapterView.OnItemClickListener()  {
+                                @Override
+                                public void onItemClick(AdapterView<?> l, View v, int position, long id) {
+                                    CheckBox checkBox = (CheckBox) v.findViewById(R.id.checkBox);
+                                    mAdapter.deselectAll();
+                                    mAdapter.markSelected(position, !checkBox.isChecked());
+                                    mAdapter.notifyDataSetChanged();
+
+                                    address = matches.get(position);
+
+                                    Intent intent = new Intent(v.getContext(), NewEntryDescriptionActivity.class);
+                                    startActivityForResult(intent, GET_DESCRIPTION);
+                                }
+                            }
+                    );
+
+                    TextView select = (TextView) findViewById(R.id.currentColorLabel);
+                    select.setVisibility(View.VISIBLE);
                 }
+
+            //catches case of no internet connection
             } catch (IOException exception) {
                 Toast.makeText(this, "No network connection. Please check and try again.", Toast.LENGTH_SHORT).show();
             }

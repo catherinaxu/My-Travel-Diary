@@ -25,12 +25,13 @@ public class NewEntryDescriptionActivity extends Activity {
 
         //sets font of title
         TextView title = (TextView) findViewById(R.id.title);
-        Typeface font = Typeface.createFromAsset(getAssets(), "ostrich-regular.ttf");
-        title.setTypeface(font);
+        Typeface font_bold = Typeface.createFromAsset(getAssets(), "ostrich-black.ttf");
+        title.setTypeface(font_bold);
 
         //sets font of buttons
+        Typeface font_reg = Typeface.createFromAsset(getAssets(), "ostrich-regular.ttf");
         Button button1 = (Button) findViewById(R.id.record);
-        button1.setTypeface(font);
+        button1.setTypeface(font_reg);
     }
 
     public void setDescription(View view) {

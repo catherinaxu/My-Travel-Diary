@@ -1,6 +1,7 @@
 package com.example.catherinaxu.mycityfinder;
 
 import android.content.Context;
+import android.graphics.Typeface;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,13 +17,15 @@ public class ListViewAdapter extends ArrayAdapter<String> {
     private Context mContext;
     private List<String> mLocations;
     private SparseBooleanArray mSelected;
+    private Typeface font_reg;
 
-    public ListViewAdapter(Context context, List<String> locations) {
+    public ListViewAdapter(Context context, List<String> locations, String FONT) {
         super(context, R.layout.layout_list_item, locations);
 
         mContext = context;
         mLocations = locations;
         mSelected = new SparseBooleanArray();
+        font_reg = Typeface.createFromAsset(context.getAssets(), FONT);
     }
 
     @Override
@@ -34,6 +37,7 @@ public class ListViewAdapter extends ArrayAdapter<String> {
             convertView = LayoutInflater.from(mContext).inflate(R.layout.layout_list_item, null);
             holder = new ViewHolder();
             holder.listItem = (TextView) convertView.findViewById(R.id.list_item);
+            holder.listItem.setTypeface(font_reg);
             holder.checkBox = (CheckBox) convertView.findViewById(R.id.checkBox);
             convertView.setTag(holder);
         } else {
